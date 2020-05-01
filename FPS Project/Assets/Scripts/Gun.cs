@@ -2,94 +2,117 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
-public class Gun : MonoBehaviour {
-
-    [Header("Gun Configuration")]
+public class Gun : MonoBehaviour
+{
+    [Header("Gun configuration")]
     public float damage;
     public float range;
     public float firerate;
     public float waitToFirerate;
     public Camera cam;
-    public ParticleSystem armoParticle;
+    public ParticleSystem ammoParticle;
+    public ParticleSystem bulletEject;
     public GameObject impact;
     public bool hold = false;
-
+    public GameObject BulletHole;
     [Space]
     [Header("Ammo")]
-    public int maxAmmoInMagazine;
-    public int ammoInMagazine;
-    public int ammo;
-    public int timeToReload;
-
+    public int maxAmmoInPaint;
+    public int AmmoInPaint;
+    public int Ammo;
+    public int TimeToRecharge;
     [Space]
-    [Header("Canvas")]
-    public Text ammoTxt;
-    public Slider reloadShow;
-    public GameObject reloadGO;
+    [Header("canvas")]
+    public Text ammotxt;
+    public Slider rechargeShow;
+    public GameObject rechargeGo;
+        
 
-    private bool reloadb = false;
+    private bool rechargeb = false;
     private int timetr;
+    private PlayerController pc;
 
-    // Update is called once per frame
-    void Update() {
-        reloadShow.value = timetr;
-        ammoTxt.text = ammoInMagazine + "/" + ammo;
-
-        if (Input.GetButtonDown("Fire1"))
+    
+    void Update()
+    {
+        rechargeShow.value = timetr;
+        ammotxt.text = AmmoInPaint + "/" + Ammo;
+        
+        if (Input.GetButtonDown("Fire1") && pc.enableMouse == true)
             hold = true;
+       
         if (Input.GetButtonUp("Fire1"))
             hold = false;
-
+        
         if (hold == true)
             waitToFirerate += 1;
-
-        if (waitToFirerate > firerate && ammoInMagazine > 0)
+        
+        if (waitToFirerate > firerate && AmmoInPaint > 0)
             Shoot();
-
-        if (Input.GetButtonDown("Reload") && ammoInMagazine != maxAmmoInMagazine && ammo != 0 && reloadb == false) {
-            reloadGO.SetActive(true);
-            reloadb = true;
+        
+        if (Input.GetButtonDown("Recharge") && AmmoInPaint != maxAmmoInPaint && Ammo != 0 && rechargeb == false && pc.enableMouse == true)
+        {
+            rechargeGo.SetActive(true);
+            rechargeb = true;
         }
-
-        if (reloadb == true) {
-            if (timetr > timeToReload) {
-                for (int i = 0; i < maxAmmoInMagazine; i++) {
-                    if (ammoInMagazine < maxAmmoInMagazine && ammo > 0) {
-                    ammo -= 1;
-                    ammoInMagazine += 1;
-                    } else {
+        
+        if(rechargeb == true)
+        {
+            pc.anim.SetBool("reloading", true);
+            if(timetr > TimeToRecharge)
+            {
+                for (int i = 0; i < maxAmmoInPaint; i++)
+                {
+                    if (AmmoInPaint < maxAmmoInPaint && Ammo > 0)
+                    {
+                        Ammo -= 1;
+                        AmmoInPaint += 1;
+                    }
+                    else
+                    {
                         break;
                     }
                 }
-                reloadb = false;
+                rechargeb = false;
                 timetr = 0;
-                reloadGO.SetActive(false);
-            } else {
+                rechargeGo.SetActive(false);
+            }
+            else
+            {
                 timetr += 1;
             }
+        } 
+        else
+        {
+            pc.anim.SetBool("reloading", false);
         }
     }
-
-    private void Start() {
-        reloadShow.maxValue = timeToReload;
+    
+    private void Start()
+    {
+        rechargeShow.maxValue = TimeToRecharge;
+        pc = (FindObjectOfType(typeof(PlayerController)) as PlayerController);
     }
+    void Shoot()
+    {
+            pc.anim.Play("shoot");
+            bulletEject.Play();
+            waitToFirerate = 0;
+            AmmoInPaint -= 1;
+            ammoParticle.Play();
+            RaycastHit hit;
+            if(Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, range))
+            {
+                Debug.Log("Mirando em: " + hit.transform.name);
 
-    void Shoot() {
-        waitToFirerate = 0;
-        armoParticle.Play();
-        RaycastHit hit;
-        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, range)) {
-            Debug.Log("Mirando em:" + hit.transform.name);
+                ObjectDestroyable ob = hit.transform.GetComponent<ObjectDestroyable>();
+                if (ob != null)
+                    ob.takeDamage(damage);
 
-            ObjectDestroyable ob = hit.transform.GetComponent<ObjectDestroyable>();
-            if (ob != null) {
-                ob.takeDamage(damage);
-            } 
 
-            GameObject impactGO = Instantiate(impact, hit.point, Quaternion.LookRotation(hit.normal));
+                GameObject impactGO = Instantiate(impact, hit.point, Quaternion.LookRotation(hit.normal));
+                Instantiate(BulletHole, hit.point, Quaternion.LookRotation(hit.normal));
         }
-
-        ammoInMagazine -= 1;
+       
     }
 }

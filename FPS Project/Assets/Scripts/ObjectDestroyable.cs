@@ -2,29 +2,33 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectDestroyable : MonoBehaviour {
-
+public class ObjectDestroyable : MonoBehaviour
+{
     public float health;
     public List<GameObject> Parts = new List<GameObject>();
     private BoxCollider bc;
     private Rigidbody rbb;
-    private int cooldown = 100;
-    private bool isCooldown = false;
-
-    void Start() {
+   
+    void Start()
+    {
         bc = GetComponent<BoxCollider>();
         rbb = GetComponent<Rigidbody>();
     }
-    
-    public void takeDamage(float i) {
+
+  
+    public void takeDamage(float i)
+    {
         health -= i;
-        if (health <= 0) {
-            Die();
+        if(health <= 0)
+        {
+            die();
         }
     }
 
-    void Die() {
-        for (int i = 0; i < Parts.Count; i++) {
+    void die()
+    {
+        for(int i = 0; i < Parts.Count; i++)
+        {
             Parts[i].AddComponent<Rigidbody>();
             Rigidbody rb = Parts[i].GetComponent<Rigidbody>();
             float x = Random.Range(-100, 100);
@@ -34,17 +38,8 @@ public class ObjectDestroyable : MonoBehaviour {
         }
         bc.isTrigger = true;
         rbb.isKinematic = true;
-        isCooldown = true;
+        Destroy(this);
     }
 
-    private void Update() {
-        if (isCooldown == true) {
-            if (cooldown > 0) {
-                cooldown -= 1;
-            }
-            else {
-                Destroy(gameObject);
-            }
-        }
-    }
+    
 }
